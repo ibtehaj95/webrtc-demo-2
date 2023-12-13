@@ -1,3 +1,53 @@
-.App{
+.App {
     box-sizing: border-box;
+    background-color: #f2f2f2;
+    color: #333;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.videos-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.names-row{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    font-size: 1.5rem;
+    margin: 1rem 0 1rem 0;
+}
+
+.videos-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.local-video {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+}
+
+.remote-video {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+}
+
+.inputs-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.title{
+    text-align: center;
+    font-size: 3rem;
 }
