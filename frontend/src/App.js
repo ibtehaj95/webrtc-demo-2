@@ -8,6 +8,7 @@ function App (){
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const pcRef = useRef(null);
+    const textRef = useRef(null);
     const [cameraOn, setCameraOn] = useState(false);
 
     const handleStartWebcam = () => {
@@ -21,13 +22,15 @@ function App (){
     };
 
     const createOffer = () => {
+        // the sender sends an offer to the receiver
         pcRef.current.createOffer({ 
-            offerToReceiveVideo: 1, // we want to receive video from the other side
-            offerToReceiveAudio: 1, // we want to receive audio from the other side
+            offerToReceiveVideo: 1, // we want to receive video from the answerer
+            offerToReceiveAudio: 1, // we want to receive audio from the answerer
         })
             .then(sdp => {
                 console.log(JSON.stringify(sdp));
-                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point
+                // save your SDP in local description
+                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point. Already done in useEffect at component mount
                 // at this point you should see ICE candidates in the console
                 // these ICE candidates are of the offerer
                 // the offerer should send the offer to the answerer
@@ -38,29 +41,36 @@ function App (){
     };
 
     const createAnswer = () => {
-        //change comments to represent answerer
+        // the answerer sends an answer to the offerer
         pcRef.current.createAnswer({ 
-            offerToReceiveVideo: 1, // we want to receive video from the other side
-            offerToReceiveAudio: 1, // we want to receive audio from the other side
+            offerToReceiveVideo: 1, // we want to receive video from the offerer
+            offerToReceiveAudio: 1, // we want to receive audio from the offerer
         })
             .then(sdp => {
                 console.log(JSON.stringify(sdp));
-                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point
+                // save your SDP in local description
+                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point. Already done in useEffect at component mount
                 // at this point you should see ICE candidates in the console
-                // these ICE candidates are of the offerer
-                // the offerer should send the offer to the answerer
+                // these ICE candidates are of the answerer
+                // the answerer should send the answer to the offerer
             })
             .catch(error => {
                 console.error(error);
             });
     };
 
-    const createRemoteDesc = () => {
-        // TODO: Create remote description logic
+    const createAndSetRemoteDesc = () => {
+        // whether you are the offerer or the answerer, you have to set the remote description of the other party
+        // for that you need to get the SDP of the other party
+        const sdp = JSON.parse(textRef.current.value);
+        console.log(sdp);
+        pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
     };
 
-    const createICECands = () => {
-        // TODO: Create ICE candidates logic
+    const addICECandidate = () => {
+        const iceCandidate = JSON.parse(textRef.current.value);
+        console.log(iceCandidate);
+        pcRef.current.addIceCandidate(new RTCIceCandidate(iceCandidate));
     };
 
     const userAllMediaDevices = () => {
@@ -83,6 +93,7 @@ function App (){
         navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
                 localVideoRef.current.srcObject = stream; // set the source of the video element to the captured stream
+                stream.getTracks().forEach(track => pcRef.current.addTrack(track, stream)); // add the stream to the RTCPeerConnection object
                 // remoteVideoRef.current.srcObject = stream; // only for testing
                 setCameraOn(true); // disable the start camera button
             })
@@ -98,7 +109,7 @@ function App (){
         
         pc.onicecandidate = (e) => {
             if (e.candidate) {
-                console.log("ICE Candidate", JSON.stringify(e.candidate));
+                console.log(JSON.stringify(e.candidate));
             }
         };
         
@@ -107,7 +118,7 @@ function App (){
         };
 
         pc.ontrack = (e) => {
-            // remoteVideoRef.current.srcObject = e.streams[0]; // set the source of the video element to the received stream
+            remoteVideoRef.current.srcObject = e.streams[0]; // set the source of the video element to the received stream
         }
 
         pcRef.current = pc; // store the RTCPeerConnection object in the ref, we are using pcRef like a global variable
@@ -162,12 +173,21 @@ function App (){
                 <Button variant="contained" color="primary" onClick={createAnswer} sx={{margin: 1, width: "max-content"}}>
                     Create Answer
                 </Button>
-                <Button variant="contained" color="primary" onClick={createRemoteDesc} sx={{margin: 1, width: "max-content"}}>
-                    Create Remote Description
-                </Button>
-                <Button variant="contained" color="primary" onClick={createICECands} sx={{margin: 1, width: "max-content"}}>
-                    Create ICE Candidates
-                </Button>
+                <div className="bounding-box">
+                    <TextField
+                        inputRef={textRef}
+                        multiline
+                        rows={4}
+                        variant="outlined"
+                        sx={{ margin: 1}}
+                    />
+                    <Button variant="contained" color="primary" onClick={createAndSetRemoteDesc} sx={{margin: 1, width: "max-content"}}>
+                        Set Remote Description
+                    </Button>
+                    <Button variant="contained" color="primary" onClick={addICECandidate} sx={{margin: 1, width: "max-content"}}>
+                        Add ICE Candidates
+                    </Button>
+                </div>
             </div>
         </div>
     );
