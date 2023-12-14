@@ -4,25 +4,30 @@ import { TextField } from "@mui/material";
 import "./App.scss";
 
 function App (){
+
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
-    const [callInputVal, setCallInputVal] = useState("");
+    const [startCameraDisabled, setStartCameraDisabled] = useState(false);
 
     const handleStartWebcam = () => {
 
         getUserMedia(); // get the user's webcam/microphone stream
     };
 
-    const handleCallRemote = () => {
-        // TODO: Implement call remote logic
+    const createOffer = () => {
+        // TODO: Create offer logic
     };
 
-    const handleAcceptCall = () => {
-        // TODO: Implement accept call logic
+    const createAnswer = () => {
+        // TODO: Create answer logic
     };
 
-    const handleHangUp = () => {
-        // TODO: Implement hang up logic
+    const createRemoteDesc = () => {
+        // TODO: Create remote description logic
+    };
+
+    const createICECands = () => {
+        // TODO: Create ICE candidates logic
     };
 
     const userAllMediaDevices = () => {
@@ -45,11 +50,17 @@ function App (){
         navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
                 localVideoRef.current.srcObject = stream; // set the source of the video element to the captured stream
+                // remoteVideoRef.current.srcObject = stream; // only for testing
+                setStartCameraDisabled(true); // disable the start camera button
             })
             .catch(error => {
                 console.error("Error accessing media devices.", error);
             });
     };
+
+    useEffect(() => {
+        handleStartWebcam();    // get the user's webcam/microphone stream on component mount
+    }, []);
 
     return(
         <div className="App">
@@ -65,12 +76,24 @@ function App (){
                         autoPlay
                         muted
                         className="local-video"
+                        style={{
+                            width: 480, 
+                            height: 300,
+                            margin: 5,
+                            backgroundColor: "black"
+                        }}
                     />
                     <video
                         ref={remoteVideoRef}
                         autoPlay
                         muted
                         className="remote-video"
+                        style={{
+                            width: 480, 
+                            height: 300,
+                            margin: 5,
+                            backgroundColor: "black"
+                        }}
                     />
                 </div>
             </div>
@@ -78,20 +101,20 @@ function App (){
                 <Button variant="contained" color="primary" onClick={userAllMediaDevices} sx={{margin: 1, width: "max-content"}}>
                     Show All Media Devices
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleStartWebcam} sx={{margin: 1, width: "max-content"}}>
+                <Button variant="contained" color="primary" disabled={startCameraDisabled} onClick={handleStartWebcam} sx={{margin: 1, width: "max-content"}}>
                     Start Webcam
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleCallRemote} sx={{margin: 1, width: "max-content"}}>
-                    Call Remote
+                <Button variant="contained" color="primary" onClick={createOffer} sx={{margin: 1, width: "max-content"}}>
+                    Create Offer
                 </Button>
-                <div>
-                    <TextField label="Call Input" variant="outlined" size="small" value={callInputVal} onChange={(event) => {setCallInputVal(event.target.value)}} sx={{margin: 1}}/>
-                    <Button variant="contained" color="primary" onClick={handleAcceptCall} sx={{margin: 1, width: "max-content"}}>
-                        Accept Call
-                    </Button>
-                </div>
-                <Button variant="contained" color="primary" onClick={handleHangUp} sx={{margin: 1, width: "max-content"}}>
-                    Hang Up
+                <Button variant="contained" color="primary" onClick={createAnswer} sx={{margin: 1, width: "max-content"}}>
+                    Create Answer
+                </Button>
+                <Button variant="contained" color="primary" onClick={createRemoteDesc} sx={{margin: 1, width: "max-content"}}>
+                    Create Remote Description
+                </Button>
+                <Button variant="contained" color="primary" onClick={createICECands} sx={{margin: 1, width: "max-content"}}>
+                    Create ICE Candidates
                 </Button>
             </div>
         </div>
