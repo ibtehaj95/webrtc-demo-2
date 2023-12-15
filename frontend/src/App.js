@@ -92,8 +92,9 @@ function App (){
         // https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API
         navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
-                localVideoRef.current.srcObject = stream; // set the source of the video element to the captured stream
-                stream.getTracks().forEach(track => pcRef.current.addTrack(track, stream)); // add the stream to the RTCPeerConnection object
+                localVideoRef.current.srcObject = stream; // set the source of the video element to the captured stream, this is for you to see yourself
+                stream.getTracks().forEach(track => pcRef.current.addTrack(track, stream)); // add the stream to the RTCPeerConnection object, this is for the other party to see you
+                // stream.getTracks().forEach(track => console.log(track)); // print the tracks in the stream
                 // remoteVideoRef.current.srcObject = stream; // only for testing
                 setCameraOn(true); // disable the start camera button
             })
