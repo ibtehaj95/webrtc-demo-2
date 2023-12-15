@@ -7,6 +7,7 @@ module.exports = {
         filename: "index.bundle.js",
     },
     devServer: {
+        https: true,
         port: 5000,
         historyApiFallback: true,   //for react router
     },
