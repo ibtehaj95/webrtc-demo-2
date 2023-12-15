@@ -15,3 +15,10 @@ For the manual method, use the code commit (main branch) titled "manual method" 
 5. Tab 1: Paste the answer and set the remote description
 6. Tab 1: Copy the first ICE candidate (amongst a couple other few) that was generated when we clicked on "Create Offer" (step 2)
 7. Tab 2: Clear the text box and paste the ICE candidate and click on "Add ICE Candidate"
+
+Notes:
+
+In step 7, either of the two clients can add the ICE candidates, but only one needs to do it. So, alternatively, 
+
+6. Tab 2: Copy the first ICE candidate (amongst a couple other few) that was generated when we clicked on "Create Answer" (step 4)
+7. Tab 1: Clear the text box and paste the ICE candidate and click on "Add ICE Candidate"
