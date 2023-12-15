@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Button from '@mui/material/Button';
 import { TextField } from "@mui/material";
 import "./App.scss";
+import io from "socket.io-client";
 
 function App (){
 
@@ -10,6 +11,17 @@ function App (){
     const pcRef = useRef(null);
     const textRef = useRef(null);
     const [cameraOn, setCameraOn] = useState(false);
+    const [socket] = useState(io(
+        "http://localhost:8080/webRTCPeers",    //if you don't specify the exact URL and port (like this http://localhost:8080/webRTCPeers), it will try to connect to the same URL and port as the frontend
+        { 
+            path: "/webrtc" 
+        }));
+
+    // const socket = io(
+    //     "http://localhost:8080/webRTCPeers",    //if you don't specify the exact URL and port (like this http://localhost:8080/webRTCPeers), it will try to connect to the same URL and port as the frontend
+    //     { 
+    //         path: "/webrtc" 
+    //     });
 
     const handleStartWebcam = () => {
         getUserMedia(); // get the user's webcam/microphone stream
@@ -34,6 +46,9 @@ function App (){
                 // at this point you should see ICE candidates in the console
                 // these ICE candidates are of the offerer
                 // the offerer should send the offer to the answerer
+                socket.emit("sdp", {
+                    sdp,
+                });  // send the offer to the answerer
             })
             .catch(error => {
                 console.error(error);
@@ -124,6 +139,15 @@ function App (){
 
         pcRef.current = pc; // store the RTCPeerConnection object in the ref, we are using pcRef like a global variable
         // from this point on, pc will not be addressed directly, but rather through pcRef.current, because it doesn't exist outside of this useEffect block
+        
+        socket.on("connection-success", (success) => {
+            console.log(success);
+        });
+
+        socket.on("sdp", (data) => {
+            console.log(data);
+        });
+
     }, []);
 
     return(
