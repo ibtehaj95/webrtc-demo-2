@@ -16,7 +16,14 @@ function App (){
         { 
             path: "/webrtc" 
         }));    //this is the backened socket.io server
-    const candidates = useRef([]);
+    // const candidates = useRef([]);
+    const [offerVisible, setOfferVisible] = useState(true);
+    const [answerVisible, setAnswerVisible] = useState(false);
+    const [callStatus, setCallStatus] = useState("Not Calling");
+
+    const sendToPeer = (eventType, payload) => {
+        socket.emit(eventType, payload);    // send the event type and the payload to the Socket.IO signaling server
+    }
 
     const handleStartWebcam = () => {
         getUserMedia(); // get the user's webcam/microphone stream
@@ -28,6 +35,13 @@ function App (){
         setCameraOn(false); // enable the start camera button
     };
 
+    const processSDP = (sdp) => {
+        console.log(JSON.stringify(sdp));
+                // save your SDP in local description
+                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point. Already done in useEffect at component mount
+                sendToPeer("sdp", {sdp}); // send the SDP to the other party via the Socket.IO signaling server
+    };
+
     const createOffer = () => {
         // the sender sends an offer to the receiver
         pcRef.current.createOffer({ 
@@ -35,15 +49,9 @@ function App (){
             offerToReceiveAudio: 1, // we want to receive audio from the answerer
         })
             .then(sdp => {
-                console.log(JSON.stringify(sdp));
-                // save your SDP in local description
-                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point. Already done in useEffect at component mount
-                // at this point you should see ICE candidates in the console
-                // these ICE candidates are of the offerer
-                // the offerer should send the offer to the answerer
-                socket.emit("sdp", {
-                    sdp,
-                });  // send the sdp to the other party via the Socket.IO signaling server
+              processSDP(sdp);
+              setOfferVisible(false);
+              setCallStatus("Calling");
             })
             .catch(error => {
                 console.error(error);
@@ -57,38 +65,13 @@ function App (){
             offerToReceiveAudio: 1, // we want to receive audio from the offerer
         })
             .then(sdp => {
-                console.log(JSON.stringify(sdp));
-                // save your SDP in local description
-                pcRef.current.setLocalDescription(sdp); // you should have a handler for ICE candidates before this point. Already done in useEffect at component mount
-                // at this point you should see ICE candidates in the console
-                // these ICE candidates are of the answerer
-                // the answerer should send the answer to the offerer
-                
-                socket.emit("sdp", {
-                    sdp,
-                });  // send the sdp to the other party via the Socket.IO signaling server
+                processSDP(sdp);
+                setAnswerVisible(false);
+                setCallStatus("In Call");
             })
             .catch(error => {
                 console.error(error);
             });
-    };
-
-    const createAndSetRemoteDesc = () => {
-        // whether you are the offerer or the answerer, you have to set the remote description of the other party
-        // for that you need to get the SDP of the other party
-        const sdp = JSON.parse(textRef.current.value);
-        console.log(sdp);
-        pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
-    };
-
-    const addICECandidate = () => {
-        // const iceCandidate = JSON.parse(textRef.current.value); // uncomment to go into the manual mode
-        // console.log(iceCandidate); // uncomment to go into the manual mode
-        candidates.current.forEach(candidate => {
-            console.log(candidate);
-            pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-        }); // comment to go into the manual mode
-        // pcRef.current.addIceCandidate(new RTCIceCandidate(iceCandidate)); // uncomment to go into the manual mode
     };
 
     const userAllMediaDevices = () => {
@@ -121,6 +104,27 @@ function App (){
             });
     };
 
+    const showHideButtons = () => {
+        if (offerVisible) {
+            return(
+                <div>
+                    <Button variant="contained" color="primary" onClick={createOffer} sx={{margin: 1, width: "max-content"}}>
+                        Call
+                    </Button>
+                </div>
+            )
+        }
+        else if (answerVisible) {
+            return(
+                <div>
+                    <Button variant="contained" color="primary" onClick={createAnswer} sx={{margin: 1, width: "max-content"}}>
+                        Answer
+                    </Button>
+                </div>
+            )
+        }
+    }
+
     useEffect(() => {
         handleStartWebcam();    // get the user's webcam/microphone stream on component mount
         
@@ -129,7 +133,8 @@ function App (){
         pc.onicecandidate = (e) => {
             if (e.candidate) {
                 console.log(JSON.stringify(e.candidate));
-                socket.emit("candidate", e.candidate); // send the ICE candidate to the other party via the Socket.IO signaling server
+                // socket.emit("candidate", e.candidate); // send the ICE candidate to the other party via the Socket.IO signaling server
+                sendToPeer("candidate", e.candidate); // send the ICE candidate to the other party via the Socket.IO signaling server
             }
         };
         
@@ -150,12 +155,22 @@ function App (){
 
         socket.on("sdp", (data) => {
             console.log(data);
+            pcRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp)); // set the remote description to the received SDP
             textRef.current.value = JSON.stringify(data.sdp);   // comment to go into the manual mode
+            if (data.sdp.type === "offer") {
+                setOfferVisible(false);
+                setAnswerVisible(true);
+                setCallStatus("Incoming Call");
+            }
+            else{
+                setCallStatus("In Call");
+            }
         });
 
         socket.on("candidate", (candidate) => {
             console.log(candidate);
-            candidates.current = [...candidates.current, candidate]; // comment to go into the manual mode
+            // candidates.current = [...candidates.current, candidate]; // comment to go into the manual mode
+            pcRef.current.addIceCandidate(new RTCIceCandidate(candidate)); // add the received ICE candidate to the RTCPeerConnection object
         });
 
     }, []);
@@ -202,27 +217,21 @@ function App (){
                 <Button variant="contained" color="primary" onClick={cameraOn?handleStopWebcam:handleStartWebcam} sx={{margin: 1, width: "max-content"}}>
                     {cameraOn ? "Stop Webcam" : "Start Webcam"}
                 </Button>
-                <Button variant="contained" color="primary" onClick={createOffer} sx={{margin: 1, width: "max-content"}}>
+                {/* <Button variant="contained" color="primary" onClick={createOffer} sx={{margin: 1, width: "max-content"}}>
                     Create Offer
                 </Button>
                 <Button variant="contained" color="primary" onClick={createAnswer} sx={{margin: 1, width: "max-content"}}>
                     Create Answer
-                </Button>
-                <div className="bounding-box">
-                    <TextField
+                </Button> */}
+                {showHideButtons()}
+                <div>{callStatus}</div>
+                <TextField
                         inputRef={textRef}
                         multiline
                         rows={4}
                         variant="outlined"
                         sx={{ margin: 1}}
-                    />
-                    <Button variant="contained" color="primary" onClick={createAndSetRemoteDesc} sx={{margin: 1, width: "max-content"}}>
-                        Set Remote Description
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={addICECandidate} sx={{margin: 1, width: "max-content"}}>
-                        Add ICE Candidates
-                    </Button>
-                </div>
+                />
             </div>
         </div>
     );
