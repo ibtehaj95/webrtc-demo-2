@@ -6,7 +6,7 @@ Following the Youtube tutorial: https://www.youtube.com/watch?v=5M3Jzs2NFSA
 To setup, please run npm install in the frontend as well as the backend directories
 To run, please navigate to the main directory (web-rtc-demo-2) and run "bash scripts/start.sh". To access the web app, you need to use https://localhost:5000/ or https://127.0.0.1:5000/, note the https protocol, generally http is used for development.
 
-For the manual method, use the code commit (main branch) titled "manual method" (15.12.23) and follow these steps:
+For the manual method, use the code commit (main branch) titled "manual method" (15.12.23), or simply use the "manual-method" branch, and follow these steps:
 
 1. Open two tabs (you may also do this on different laptops, either on same or different networks)
 2. Tab 1: Create offer (click on button), copy the SDP offer from console
