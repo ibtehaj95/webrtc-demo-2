@@ -118,6 +118,7 @@ function App (){
         };
 
         pc.ontrack = (e) => {
+            console.log("Track received:");
             remoteVideoRef.current.srcObject = e.streams[0]; // set the source of the video element to the received stream
         }
 
