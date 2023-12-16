@@ -22,3 +22,12 @@ In step 7, either of the two clients can add the ICE candidates, but only one ne
 
 6. Tab 2: Copy the first ICE candidate (amongst a couple other few) that was generated when we clicked on "Create Answer" (step 4)
 7. Tab 1: Clear the text box and paste the ICE candidate and click on "Add ICE Candidate"
+
+For the automated method, use the code commit titled "automated the whole copy pasting process" (16.12.23) and follow these steps:
+
+1. Open two tabs
+2. Tab 1: Create Offer
+3. Tab 2: Set Remote Description
+4. Tab 2: Create Answer
+5. Tab 1: Set Remote Description
+6. Tab 1: Add ICE Cadidate

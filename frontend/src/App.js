@@ -15,13 +15,8 @@ function App (){
         "http://localhost:8080/webRTCPeers",    //if you don't specify the exact URL and port (like this http://localhost:8080/webRTCPeers), it will try to connect to the same URL and port as the frontend
         { 
             path: "/webrtc" 
-        }));
-
-    // const socket = io(
-    //     "http://localhost:8080/webRTCPeers",    //if you don't specify the exact URL and port (like this http://localhost:8080/webRTCPeers), it will try to connect to the same URL and port as the frontend
-    //     { 
-    //         path: "/webrtc" 
-    //     });
+        }));    //this is the backened socket.io server
+    const candidates = useRef([]);
 
     const handleStartWebcam = () => {
         getUserMedia(); // get the user's webcam/microphone stream
@@ -48,7 +43,7 @@ function App (){
                 // the offerer should send the offer to the answerer
                 socket.emit("sdp", {
                     sdp,
-                });  // send the offer to the answerer
+                });  // send the sdp to the other party via the Socket.IO signaling server
             })
             .catch(error => {
                 console.error(error);
@@ -68,6 +63,10 @@ function App (){
                 // at this point you should see ICE candidates in the console
                 // these ICE candidates are of the answerer
                 // the answerer should send the answer to the offerer
+                
+                socket.emit("sdp", {
+                    sdp,
+                });  // send the sdp to the other party via the Socket.IO signaling server
             })
             .catch(error => {
                 console.error(error);
@@ -83,9 +82,13 @@ function App (){
     };
 
     const addICECandidate = () => {
-        const iceCandidate = JSON.parse(textRef.current.value);
-        console.log(iceCandidate);
-        pcRef.current.addIceCandidate(new RTCIceCandidate(iceCandidate));
+        // const iceCandidate = JSON.parse(textRef.current.value); // uncomment to go into the manual mode
+        // console.log(iceCandidate); // uncomment to go into the manual mode
+        candidates.current.forEach(candidate => {
+            console.log(candidate);
+            pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }); // comment to go into the manual mode
+        // pcRef.current.addIceCandidate(new RTCIceCandidate(iceCandidate)); // uncomment to go into the manual mode
     };
 
     const userAllMediaDevices = () => {
@@ -126,6 +129,7 @@ function App (){
         pc.onicecandidate = (e) => {
             if (e.candidate) {
                 console.log(JSON.stringify(e.candidate));
+                socket.emit("candidate", e.candidate); // send the ICE candidate to the other party via the Socket.IO signaling server
             }
         };
         
@@ -146,6 +150,12 @@ function App (){
 
         socket.on("sdp", (data) => {
             console.log(data);
+            textRef.current.value = JSON.stringify(data.sdp);   // comment to go into the manual mode
+        });
+
+        socket.on("candidate", (candidate) => {
+            console.log(candidate);
+            candidates.current = [...candidates.current, candidate]; // comment to go into the manual mode
         });
 
     }, []);

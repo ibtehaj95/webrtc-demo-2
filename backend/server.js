@@ -2,7 +2,7 @@ const express = require('express');
 const io = require('socket.io')({
     path: '/webrtc',    // this is like an API endpoint, it is the path where the socket will be listening for requests. Normally, we would have just one path in a simple setup
     cors: {
-        origin: "https://localhost:5000", //doesn't cover for 127.0.0.1
+        origin: ["https://localhost:5000", "https://127.0.0.1:5000"], //doesn't cover for 127.0.0.1
         methods: ["GET", "POST"]
     }
 });
@@ -43,18 +43,13 @@ const start = () => {
         
         socket.on('sdp', data => {
             console.log('sdp offer received', data);
-            socket.broadcast.emit('sdp', data);
+            socket.broadcast.emit('sdp', data); // broadcast to all other users, except the sender
         });
         
-        // socket.on('answer', answer => {
-        //     console.log('answer received');
-        //     socket.broadcast.emit('answer', answer);
-        // });
-        
-        // socket.on('iceCandidate', iceCandidate => {
-        //     console.log('ice candidate received');
-        //     socket.broadcast.emit('iceCandidate', iceCandidate);
-        // });
+        socket.on('candidate', data => {
+            console.log(data);
+            socket.broadcast.emit('candidate', data); // broadcast to all other users, except the sender
+        });
     });
 };
 
